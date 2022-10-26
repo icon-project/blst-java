@@ -27,3 +27,27 @@ jobs:
         with:
           name: blst-linux-amd64
           path: blst/bindings/java/supranational.blst.jar
+
+  macos-build:
+    runs-on: macos-12
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Checkout blst
+        run: |
+          git clone https://github.com/supranational/blst.git
+          cd blst
+          git checkout v0.3.10
+
+      - name: Build blst
+        run: |
+          cd blst/bindings/java
+          export CC="cc"
+          export CXX="c++ -std=c++11"
+          ./run.me
+
+      - name: Update blst jar
+        uses: actions/upload-artifact@v3
+        with:
+          name: blst-macos-amd64
+          path: blst/bindings/java/supranational.blst.jar
