@@ -22,11 +22,13 @@ jobs:
           cd blst/bindings/java
           ./run.me
 
-      - name: Update blst jar
+      - name: Upload blst src and bin
         uses: actions/upload-artifact@v3
         with:
           name: blst-linux-amd64
-          path: blst/bindings/java/supranational.blst.jar
+          path: |
+            blst/bindings/java/supranational/blst/Linux/
+            blst/bindings/java/supranational/blst/*.java
 
   macos-build:
     runs-on: macos-12
@@ -52,8 +54,10 @@ jobs:
           export CXX="c++ -std=c++11"
           ./run.me
 
-      - name: Update blst jar
+      - name: Upload blst src and bin
         uses: actions/upload-artifact@v3
         with:
           name: blst-macos-amd64
-          path: blst/bindings/java/supranational.blst.jar
+          path: |
+            blst/bindings/java/supranational/blst/Mac/
+            blst/bindings/java/supranational/blst/*.java
