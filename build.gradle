@@ -1,5 +1,8 @@
 plugins {
     id 'java-library'
+    id 'maven-publish'
+    id 'signing'
+    id "io.github.gradle-nexus.publish-plugin" version "1.1.0"
 }
 
 repositories {
@@ -12,4 +15,89 @@ java {
 }
 
 dependencies {
+}
+
+task sourcesJar(type: Jar, dependsOn: classes) {
+    classifier 'sources'
+    from sourceSets.main.allSource
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier 'javadoc'
+    from javadoc.destinationDir
+}
+
+def repoUrl = 'https://github.com/icon-project/blst-java'
+def snapshotSuffix = project.hasProperty('release') ? '' : '-SNAPSHOT'
+group = GROUP
+version = VERSION + snapshotSuffix
+
+def pomConfig = {
+    licenses {
+        license {
+            name "The Apache Software License, Version 2.0"
+            url "http://www.apache.org/licenses/LICENSE-2.0.txt"
+            distribution "repo"
+        }
+    }
+    developers {
+        developer {
+            id "iconfoundation"
+            name "icon.foundation"
+            email "foo@icon.foundation"
+        }
+    }
+    scm {
+        url repoUrl
+    }
+}
+
+publishing {
+    repositories {
+        maven {
+            name = 'mavenCentral'
+            def releasesUrl = "https://oss.sonatype.org/service/local/staging/deploy/maven2"
+            def snapshotsUrl = "https://oss.sonatype.org/content/repositories/snapshots"
+            url = version.endsWith('SNAPSHOT') ? snapshotsUrl : releasesUrl
+            credentials {
+                username = project.hasProperty('mavenCentralUsername') ? "$mavenCentralUsername" : ''
+                password = project.hasProperty('mavenCentralPassword') ? "$mavenCentralPassword" : ''
+            }
+        }
+    }
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+            artifact sourcesJar
+            artifact javadocJar
+            pom.withXml {
+                def root = asNode()
+                root.appendNode('name', project.name)
+                root.appendNode('description', 'Java wrapper for blst native library from Supranational')
+                root.appendNode('url', repoUrl)
+                root.children().last() + pomConfig
+            }
+        }
+    }
+}
+
+signing {
+    required project.hasProperty('release')
+    if (project.hasProperty('signingKey')) {
+        def signingKey = project.findProperty("signingKey")
+        def signingPassword = project.findProperty("signingPassword")
+        useInMemoryPgpKeys(signingKey, signingPassword)
+    }
+    sign publishing.publications.mavenJava
+}
+
+nexusPublishing {
+    packageGroup = GROUP
+    repositories {
+        sonatype {
+            stagingProfileId = findProperty('mavenProfileId') ?: System.getenv("STAGING_PROFILE_ID")
+            username = findProperty('mavenCentralUsername') ?: System.getenv("OSSRH_USERNAME")
+            password = findProperty('mavenCentralPassword') ?: System.getenv("OSSRH_PASSWORD")
+        }
+    }
 }
