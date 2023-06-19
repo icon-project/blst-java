@@ -1,6 +1,9 @@
 name: Build and publish package
 
 on:
+  push:
+    branches:
+      - publish-aarch64-binary
   release:
     types: [created]
 
@@ -23,6 +26,36 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: blst-linux-amd64
+          path: |
+            blst/bindings/java/supranational/blst/Linux/
+            blst/bindings/java/supranational/blst/*.java
+
+  linux-aarch64-build:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Install cross-compilers
+        run: |
+          sudo apt-get update
+          sudo apt-get install gcc-aarch64-linux-gnu g++-aarch64-linux-gnu binutils-aarch64-linux-gnu
+
+      - name: Checkout blst
+        run: |
+          git clone https://github.com/supranational/blst.git
+          cd blst
+          git checkout v0.3.10
+
+      - name: Build blst
+        run: |
+          cd blst/bindings/java
+          export CC=aarch64-linux-gnu-gcc
+          export CXX=aarch64-linux-gnu-g++
+          ./build.sh
+          mv supranational/blst/Linux/amd64 supranational/blst/Linux/aarch64
+
+      - name: Upload blst src and bin
+        uses: actions/upload-artifact@v3
+        with:
+          name: blst-linux-aarch64
           path: |
             blst/bindings/java/supranational/blst/Linux/
             blst/bindings/java/supranational/blst/*.java
@@ -57,29 +90,29 @@ jobs:
             blst/bindings/java/supranational/blst/Mac/
             blst/bindings/java/supranational/blst/*.java
 
-  assemble-publish:
-    needs: [linux-amd64-build, macos-build]
-    runs-on: ubuntu-22.04
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Download all artifacts
-        uses: actions/download-artifact@v3
-
-      - name: Assemble
-        run: |
-          SRC_DIR="src/main/java/supranational/blst"
-          RES_DIR="src/main/resources/supranational/blst"
-          mkdir -p $SRC_DIR $RES_DIR
-          cp blst-linux-amd64/*.java $SRC_DIR
-          cp -r blst-linux-amd64/Linux $RES_DIR
-          cp -r blst-macos-amd64/Mac $RES_DIR
-
-      - name: Build and publish
-        run: ./gradlew -Prelease publishToSonatype closeAndReleaseSonatypeStagingRepository --no-daemon
-        env:
-          STAGING_PROFILE_ID : ${{ secrets.STAGING_PROFILE_ID }}
-          OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
-          OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
-          ORG_GRADLE_PROJECT_signingKey : ${{ secrets.SIGNING_KEY }}
-          ORG_GRADLE_PROJECT_signingPassword : ${{ secrets.SIGNING_PASSWORD }}
+#  assemble-publish:
+#    needs: [linux-amd64-build, macos-build]
+#    runs-on: ubuntu-22.04
+#    steps:
+#      - uses: actions/checkout@v3
+#
+#      - name: Download all artifacts
+#        uses: actions/download-artifact@v3
+#
+#      - name: Assemble
+#        run: |
+#          SRC_DIR="src/main/java/supranational/blst"
+#          RES_DIR="src/main/resources/supranational/blst"
+#          mkdir -p $SRC_DIR $RES_DIR
+#          cp blst-linux-amd64/*.java $SRC_DIR
+#          cp -r blst-linux-amd64/Linux $RES_DIR
+#          cp -r blst-macos-amd64/Mac $RES_DIR
+#
+#      - name: Build and publish
+#        run: ./gradlew -Prelease publishToSonatype closeAndReleaseSonatypeStagingRepository --no-daemon
+#        env:
+#          STAGING_PROFILE_ID : ${{ secrets.STAGING_PROFILE_ID }}
+#          OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+#          OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
+#          ORG_GRADLE_PROJECT_signingKey : ${{ secrets.SIGNING_KEY }}
+#          ORG_GRADLE_PROJECT_signingPassword : ${{ secrets.SIGNING_PASSWORD }}
