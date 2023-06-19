@@ -90,24 +90,35 @@ jobs:
             blst/bindings/java/supranational/blst/Mac/
             blst/bindings/java/supranational/blst/*.java
 
-#  assemble-publish:
-#    needs: [linux-amd64-build, macos-build]
-#    runs-on: ubuntu-22.04
-#    steps:
-#      - uses: actions/checkout@v3
-#
-#      - name: Download all artifacts
-#        uses: actions/download-artifact@v3
-#
-#      - name: Assemble
-#        run: |
-#          SRC_DIR="src/main/java/supranational/blst"
-#          RES_DIR="src/main/resources/supranational/blst"
-#          mkdir -p $SRC_DIR $RES_DIR
-#          cp blst-linux-amd64/*.java $SRC_DIR
-#          cp -r blst-linux-amd64/Linux $RES_DIR
-#          cp -r blst-macos-amd64/Mac $RES_DIR
-#
+  assemble-publish:
+    needs: [linux-amd64-build, macos-build]
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v3
+
+      - name: Assemble
+        run: |
+          SRC_DIR="src/main/java/supranational/blst"
+          RES_DIR="src/main/resources/supranational/blst"
+          mkdir -p $SRC_DIR $RES_DIR
+          cp blst-linux-amd64/*.java $SRC_DIR
+          cp -r blst-linux-amd64/Linux $RES_DIR
+          cp -r blst-linux-aarch64/Linux $RES_DIR
+          cp -r blst-macos-amd64/Mac $RES_DIR
+
+      - name: Build test
+        run: ./gradlew build --no-daemon
+
+      - name: Upload jar artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: blst-java-artifact
+          path: |
+            build/libs/
+
 #      - name: Build and publish
 #        run: ./gradlew -Prelease publishToSonatype closeAndReleaseSonatypeStagingRepository --no-daemon
 #        env:
