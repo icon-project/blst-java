@@ -91,7 +91,7 @@ jobs:
             blst/bindings/java/supranational/blst/*.java
 
   assemble-publish:
-    needs: [linux-amd64-build, macos-build]
+    needs: [linux-amd64-build, linux-aarch64-build, macos-build]
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v3
