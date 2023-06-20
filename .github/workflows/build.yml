@@ -1,9 +1,6 @@
 name: Build and publish package
 
 on:
-  push:
-    branches:
-      - publish-aarch64-binary
   release:
     types: [created]
 
@@ -109,21 +106,11 @@ jobs:
           cp -r blst-linux-aarch64/Linux $RES_DIR
           cp -r blst-macos-amd64/Mac $RES_DIR
 
-      - name: Build test
-        run: ./gradlew build --no-daemon
-
-      - name: Upload jar artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: blst-java-artifact
-          path: |
-            build/libs/
-
-#      - name: Build and publish
-#        run: ./gradlew -Prelease publishToSonatype closeAndReleaseSonatypeStagingRepository --no-daemon
-#        env:
-#          STAGING_PROFILE_ID : ${{ secrets.STAGING_PROFILE_ID }}
-#          OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
-#          OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
-#          ORG_GRADLE_PROJECT_signingKey : ${{ secrets.SIGNING_KEY }}
-#          ORG_GRADLE_PROJECT_signingPassword : ${{ secrets.SIGNING_PASSWORD }}
+      - name: Build and publish
+        run: ./gradlew -Prelease publishToSonatype closeAndReleaseSonatypeStagingRepository --no-daemon
+        env:
+          STAGING_PROFILE_ID : ${{ secrets.STAGING_PROFILE_ID }}
+          OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+          OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
+          ORG_GRADLE_PROJECT_signingKey : ${{ secrets.SIGNING_KEY }}
+          ORG_GRADLE_PROJECT_signingPassword : ${{ secrets.SIGNING_PASSWORD }}
