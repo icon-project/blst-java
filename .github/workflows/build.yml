@@ -27,6 +27,36 @@ jobs:
             blst/bindings/java/supranational/blst/Linux/
             blst/bindings/java/supranational/blst/*.java
 
+  linux-aarch64-build:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Install cross-compilers
+        run: |
+          sudo apt-get update
+          sudo apt-get install gcc-aarch64-linux-gnu g++-aarch64-linux-gnu binutils-aarch64-linux-gnu
+
+      - name: Checkout blst
+        run: |
+          git clone https://github.com/supranational/blst.git
+          cd blst
+          git checkout v0.3.10
+
+      - name: Build blst
+        run: |
+          cd blst/bindings/java
+          export CC=aarch64-linux-gnu-gcc
+          export CXX=aarch64-linux-gnu-g++
+          ./build.sh
+          mv supranational/blst/Linux/amd64 supranational/blst/Linux/aarch64
+
+      - name: Upload blst src and bin
+        uses: actions/upload-artifact@v3
+        with:
+          name: blst-linux-aarch64
+          path: |
+            blst/bindings/java/supranational/blst/Linux/
+            blst/bindings/java/supranational/blst/*.java
+
   macos-build:
     runs-on: macos-12
     steps:
@@ -58,7 +88,7 @@ jobs:
             blst/bindings/java/supranational/blst/*.java
 
   assemble-publish:
-    needs: [linux-amd64-build, macos-build]
+    needs: [linux-amd64-build, linux-aarch64-build, macos-build]
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v3
@@ -73,6 +103,7 @@ jobs:
           mkdir -p $SRC_DIR $RES_DIR
           cp blst-linux-amd64/*.java $SRC_DIR
           cp -r blst-linux-amd64/Linux $RES_DIR
+          cp -r blst-linux-aarch64/Linux $RES_DIR
           cp -r blst-macos-amd64/Mac $RES_DIR
 
       - name: Build and publish
