@@ -87,8 +87,38 @@ jobs:
             blst/bindings/java/supranational/blst/Mac/
             blst/bindings/java/supranational/blst/*.java
 
+  macos-aarch64-build:
+    runs-on: macos-12
+    steps:
+      - name: Set up JDK 11
+        uses: actions/setup-java@v3
+        with:
+          java-version: '11'
+          distribution: 'temurin'
+
+      - name: Checkout blst
+        run: |
+          git clone https://github.com/supranational/blst.git
+          cd blst
+          git checkout v0.3.10
+
+      - name: Build blst
+        run: |
+          cd blst/bindings/java
+          export CC="cc -target aarch64-darwin-macosx11"
+          export CXX="c++ -target aarch64-darwin-macosx11"
+          ./build.sh
+          mv blst/bindings/java/supranational/blst/Mac/x86_64 blst/bindings/java/supranational/blst/Mac/aarch64
+
+      - name: Upload blst src and bin
+        uses: actions/upload-artifact@v3
+        with:
+          name: blst-macos-aarch64
+          path: |
+            blst/bindings/java/supranational/blst/Mac/
+
   assemble-publish:
-    needs: [linux-amd64-build, linux-aarch64-build, macos-build]
+    needs: [linux-amd64-build, linux-aarch64-build, macos-build, macos-aarch64-build]
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v3
@@ -105,6 +135,7 @@ jobs:
           cp -r blst-linux-amd64/Linux $RES_DIR
           cp -r blst-linux-aarch64/Linux $RES_DIR
           cp -r blst-macos-amd64/Mac $RES_DIR
+          cp -r blst-macos-aarch64/Mac $RES_DIR
 
       - name: Build and publish
         run: ./gradlew -Prelease publishToSonatype closeAndReleaseSonatypeStagingRepository --no-daemon
