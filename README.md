@@ -8,7 +8,7 @@ You can include this package from [Maven Central](https://search.maven.org/artif
 by adding the following dependency in your `build.gradle`.
 
 ```groovy
-implementation 'foundation.icon:blst-java:0.3.1'
+implementation 'foundation.icon:blst-java:0.3.2'
 ```
 
 ## Supported Platforms
